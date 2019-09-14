@@ -1,7 +1,7 @@
 (defpackage proto-cl-harmony/server
   (:use :cl
         :cl-markup
-        :proto-cl-harmony/js)
+        :proto-cl-harmony/js/main)
   (:export :start
            :stop))
 (in-package :proto-cl-harmony/server)
@@ -27,7 +27,7 @@
                        :if-exists :supersede
                        :if-does-not-exist :create)
     (princ
-     (pse:with-use-ps-pack (:proto-cl-harmony/js))
+     (pse:with-use-ps-pack (:proto-cl-harmony/js/main))
      out)))
 
 ;; --- Server --- ;;
@@ -45,7 +45,8 @@
             (html5 (:head
                     (:title "proto-cl-harmony"))
                    (:body
-                    (:h1 "Hello ps-experiment!!")
+                    (:div
+                     (:button :id "play-btn" "Play"))
                     (:script :src "js/main.js" nil)))))))
 
 (defun stop ()
