@@ -4,6 +4,12 @@
         :parenscript)
   (:import-from :proto-cl-harmony/js/const
                 :get-tone-freq)
+  (:import-from :proto-cl-harmony/js/sequencer
+                :make-note
+                :init-sequencer
+                :start-sequencer
+                :register-note-list
+                :get-quater-note-tick)
   (:import-from :proto-cl-harmony/js/utils
                 :add-event-listener))
 (in-package :proto-cl-harmony/js/main)
@@ -18,18 +24,21 @@
 
 (defvar.ps+ *temp-interval* 0.5)
 
-(defun.ps start-play ()
+(defun.ps init-audioctx ()
+  (new (#j.AudioContext#)))
+
+(defun.ps+ start-play ()
   (unless *audioctx*
-    (setf *audioctx* (new (#j.AudioContext#))))
-  (let ((index 0))
+    (setf *audioctx* (init-audioctx)))
+  (init-sequencer *audioctx*)
+  (let ((note-list (list))
+        (tick (get-quater-note-tick))
+        (i 0))
     (dolist (tone '((:c 0) (:d 0) (:e 0) (:f 0) (:g 0) (:a 1) (:b 1) (:c 1)))
-      (let ((t0   *audioctx*.current-time)
-            (osc  (new (#j.OscillatorNode# *audioctx*)))
-            (gain (new (#j.GainNode# *audioctx*))))
-        (setf osc.frequency.value (get-tone-freq (car tone) (cadr tone)))
-        (chain osc
-               (connect gain)
-               (connect *audioctx*.destination))
-        (osc.start (+ t0 (* *temp-interval* index)))
-        (osc.stop  (+ t0 (* *temp-interval* (1+ index))))
-        (incf index)))))
+      (push (make-note :freq (get-tone-freq (car tone) (cadr tone))
+                       :start-tick  (* i tick)
+                       :resume-tick tick)
+            note-list)
+      (incf i))
+    (register-note-list note-list)
+    (start-sequencer 120)))
