@@ -2,7 +2,7 @@
   (:use :cl
         :ps-experiment
         :parenscript)
-  (:import-from :proto-cl-harmony/js/const
+  (:import-from :proto-cl-harmony/js/tone
                 :get-tone-freq)
   (:import-from :proto-cl-harmony/js/sequencer
                 :make-note

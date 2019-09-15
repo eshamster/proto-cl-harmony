@@ -40,5 +40,5 @@
   :depends-on (:ps-experiment-test
                :rove
                "ps-experiment/t/test-utils"
-               "proto-cl-harmony/t/main")
+               "proto-cl-harmony/t/tone")
   :perform (test-op (o c) (symbol-call :rove '#:run c)))

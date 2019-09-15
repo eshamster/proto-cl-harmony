@@ -1,9 +1,9 @@
-(defpackage proto-cl-harmony/js/const
+(defpackage proto-cl-harmony/js/tone
   (:use :cl
         :ps-experiment
         :parenscript)
-  (:export :get-tone-freq))
-(in-package :proto-cl-harmony/js/const)
+ (:export :get-tone-freq))
+(in-package :proto-cl-harmony/js/tone)
 
 (enable-ps-experiment-syntax)
 
