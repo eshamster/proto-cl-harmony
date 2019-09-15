@@ -22,8 +22,10 @@
   start-tick
   resume-tick)
 
-(defvar.ps+ *audioctx* nil)
-(defvar.ps+ *t0* 0)
+(defstruct.ps+ sequencer
+    audioctx
+  (t0 0) ; time when starting sequencer
+  (note-queue (list)))
 
 ;; --- interface --- ;;
 
@@ -31,33 +33,33 @@
   *quater-note-tick*)
 
 (defun.ps+ init-sequencer (audioctx)
-  (setf *audioctx* audioctx))
+  (make-sequencer :audioctx audioctx))
 
-(defun.ps+ register-note-list (note-list)
-  (queue-notes note-list))
+(defun.ps+ register-note-list (sequencer note-list)
+  (queue-notes (sequencer-note-queue sequencer) note-list))
 
 ;; TODO: Enable restart and stop. Avoid duplicate running.
 ;; TODO: Enable to change BPM in playing
 
-(defun.ps start-sequencer (bpm)
-  (unless *audioctx*
-    (error "Should call init-sequencer before start-sequencer"))
-  (setf *t0* *audioctx*.current-time)
-  (set-interval
-   (lambda ()
-     (let* ((cur-sec (- *audioctx*.current-time *t0*))
-            (notes (dequeue-notes (sec-to-tick cur-sec bpm)
-                                  (sec-to-tick (/ *detect-ms* 1000) bpm))))
-       (dolist (note notes)
-         (let ((start-tick (note-start-tick note))
-               (resume-tick (note-resume-tick note))
-               (osc (new (#j.OscillatorNode# *audioctx*))))
-           (setf osc.frequency.value (note-freq note))
-           (chain osc
-                  (connect *audioctx*.destination))
-           (osc.start (+ *t0* (tick-to-sec start-tick bpm)))
-           (osc.stop  (+ *t0* (tick-to-sec (+ start-tick resume-tick) bpm)))))))
-   *monitor-ms*))
+(defun.ps start-sequencer (sequencer bpm)
+  (with-slots (t0 audioctx) sequencer
+    (setf (sequencer-t0 sequencer) audioctx.current-time)
+    (set-interval
+     (lambda ()
+       (let* ((cur-sec (- audioctx.current-time t0))
+              (notes (dequeue-notes (sequencer-note-queue sequencer)
+                                    (sec-to-tick cur-sec bpm)
+                                    (sec-to-tick (/ *detect-ms* 1000) bpm))))
+         (dolist (note notes)
+           (let ((start-tick (note-start-tick note))
+                 (resume-tick (note-resume-tick note))
+                 (osc (new (#j.OscillatorNode# audioctx))))
+             (setf osc.frequency.value (note-freq note))
+             (chain osc
+                    (connect audioctx.destination))
+             (osc.start (+ t0 (tick-to-sec start-tick bpm)))
+             (osc.stop  (+ t0 (tick-to-sec (+ start-tick resume-tick) bpm)))))))
+     *monitor-ms*)))
 
 ;; --- internal --- ;;
 
@@ -75,9 +77,7 @@
 
 ;; - queue - ;;
 
-(defvar.ps+ *note-queue* (list))
-
-(defun.ps+ queue-notes (note-list)
+(defun.ps+ queue-notes (queue note-list)
   "Sort notes by its start-tick and queue them."
   (let ((copied-list (list)))
     (dolist (n note-list)
@@ -89,16 +89,16 @@
                   (> (note-start-tick a)
                      (note-start-tick b)))))
     (dolist (n copied-list)
-      (push n *note-queue*))))
+      (push n queue))))
 
-(defun.ps+ dequeue-notes (current-tick detect-tick)
+(defun.ps+ dequeue-notes (queue current-tick detect-tick)
   "Dequeue notes if its start-tick is under current-tick+detect-tick"
   (labels ((rec (result)
-             (let ((head (car *note-queue*)))
+             (let ((head (car queue)))
                (unless head
                  (return-from rec result))
                (if (< (note-start-tick head)
                       (+ current-tick detect-tick))
-                   (rec (push (pop *note-queue*) result))
+                   (rec (push (pop queue) result))
                    result))))
     (rec (list))))

@@ -19,7 +19,7 @@
 (def-top-level-form.ps "initialize"
   (add-event-listener "play-btn" "click" #'start-play))
 
-(defvar.ps+ *audioctx* nil)
+(defvar.ps+ *sequencer* nil)
 (defvar.ps+ *playing-p* nil)
 
 (defvar.ps+ *temp-interval* 0.5)
@@ -28,9 +28,8 @@
   (new (#j.AudioContext#)))
 
 (defun.ps+ start-play ()
-  (unless *audioctx*
-    (setf *audioctx* (init-audioctx)))
-  (init-sequencer *audioctx*)
+  (unless *sequencer*
+    (setf *sequencer* (init-sequencer (init-audioctx))))
   (let ((note-list (list))
         (tick (get-quater-note-tick))
         (i 0))
@@ -40,5 +39,5 @@
                        :resume-tick tick)
             note-list)
       (incf i))
-    (register-note-list note-list)
-    (start-sequencer 120)))
+    (register-note-list *sequencer* note-list)
+    (start-sequencer *sequencer* 120)))
