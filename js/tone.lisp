@@ -5,7 +5,9 @@
   (:export :get-tone-freq
            :tone-to-number
            :number-to-tone
-           :calc-tone-by-diff))
+           :calc-tone-by-diff
+           :sharp-tone-p
+           :flat-tone-p))
 (in-package :proto-cl-harmony/js/tone)
 
 (enable-ps-experiment-syntax)
@@ -56,6 +58,22 @@ See the document of tone-to-number for detail."
                     (cadr tone-list))
                 (car tone-list))
             octave)))
+
+(defun.ps+ sharp-tone-p (tone)
+  (let ((tone-list (find-tone-list tone)))
+    (and (= (length tone-list) 2)
+         (eq tone (car tone-list)))))
+
+(defun.ps+ flat-tone-p (tone)
+  (let ((tone-list (find-tone-list tone)))
+    (and (= (length tone-list) 2)
+         (eq tone (cadr tone-list)))))
+
+(defun.ps+ find-tone-list (tone)
+  (dolist (tone-list *tone-name-list*)
+    (when (find tone tone-list)
+      (return-from find-tone-list tone-list)))
+  (error "The tone name \"~A\" is invalid" tone))
 
 (defun.ps+ make-tone-table ()
   (let ((table (make-hash-table))

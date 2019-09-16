@@ -56,3 +56,17 @@
           (calc-tone-by-diff tone octave diff prefer-sharp-p)
         (ok (eq got-tone   expected-tone))
         (ok (=  got-octave expected-octave))))))
+
+(deftest.ps+ for-sharp-or-flat-tone-p
+  (dolist (pair '((:a  nil nil)
+                  (:a+   t nil)
+                  (:a- nil   t)))
+    (let ((tone    (nth 0 pair))
+          (sharp-p (nth 1 pair))
+          (flat-p  (nth 2 pair)))
+      (if sharp-p
+          (ok (sharp-tone-p tone))
+          (ok (not (sharp-tone-p tone))))
+      (if flat-p
+          (ok (flat-tone-p tone))
+          (ok (not (flat-tone-p tone)))))))
