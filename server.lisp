@@ -45,8 +45,27 @@
             (html5 (:head
                     (:title "proto-cl-harmony"))
                    (:body
+                    (:h2 "Scale")
+                    (:table
+                     (:tr (:th "Base tone")
+                          (:td (:select :id "scale-base-tone"
+                                (dolist (tone '(:a :a+ :b :c :c+ :d :d+ :e :f :f+ :g :g+))
+                                  (let ((tone-value (string-downcase (symbol-name tone))))
+                                    (if (eq tone :c)
+                                        (markup (:option :value tone-value :selected t tone))
+                                        (markup (:option :value tone-value tone))))))))
+                     (:tr (:th "Octave")
+                          (:td (:input :id "scale-octave" :type "number" :value 0)))
+                     (:tr (:th "Scale kind")
+                          (:td (:select :id "scale-kind"
+                                (dolist (kind '(:major :minor-natural
+                                                :minor-harmonic :minor-melodic))
+                                  (let ((kind-value (string-downcase (symbol-name kind))))
+                                    (if (eq kind :major)
+                                        (markup (:option :value kind-value :selected t kind))
+                                        (markup (:option :value kind-value kind)))))))))
                     (:div
-                     (:button :id "play-btn" "Play"))
+                     (:button :id "play-scale-btn" "Play Scale"))
                     (:script :src "js/main.js" nil)))))))
 
 (defun stop ()

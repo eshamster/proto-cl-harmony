@@ -3,7 +3,10 @@
         :ps-experiment
         :parenscript)
   (:import-from :proto-cl-harmony/js/tone
-                :get-tone-freq)
+                :get-tone-freq
+                :tone-to-number)
+  (:import-from :proto-cl-harmony/js/scale
+                :make-scale)
   (:import-from :proto-cl-harmony/js/sequencer
                 :make-note
                 :init-sequencer
@@ -11,13 +14,14 @@
                 :register-note-list
                 :get-quater-note-tick)
   (:import-from :proto-cl-harmony/js/utils
+                :get-value
                 :add-event-listener))
 (in-package :proto-cl-harmony/js/main)
 
 (enable-ps-experiment-syntax)
 
 (def-top-level-form.ps "initialize"
-  (add-event-listener "play-btn" "click" #'start-play))
+  (add-event-listener "play-scale-btn" "click" #'start-play-scale))
 
 (defvar.ps+ *sequencer* nil)
 (defvar.ps+ *playing-p* nil)
@@ -27,17 +31,25 @@
 (defun.ps init-audioctx ()
   (new (#j.AudioContext#)))
 
-(defun.ps+ start-play ()
+(defun.ps+ start-play-scale ()
   (unless *sequencer*
     (setf *sequencer* (init-sequencer (init-audioctx))))
-  (let ((note-list (list))
-        (tick (get-quater-note-tick))
-        (i 0))
-    (dolist (tone '((:c 0) (:d 0) (:e 0) (:f 0) (:g 0) (:a 1) (:b 1) (:c 1)))
-      (push (make-note :freq (get-tone-freq (car tone) (cadr tone))
+  (let* ((note-list (list))
+         (tick (get-quater-note-tick))
+         (base-tone (get-value "scale-base-tone"))
+         (octave    (get-value "scale-octave"))
+         (kind      (get-value "scale-kind"))
+         (scale (make-scale base-tone kind))
+         (i 0)
+         (prev-tone-number (tone-to-number (car scale) octave)))
+    (dolist (tone (append scale (car scale)))
+      (when (< (tone-to-number tone octave) prev-tone-number)
+        (incf octave))
+      (push (make-note :freq (get-tone-freq tone octave)
                        :start-tick  (* i tick)
                        :resume-tick tick)
             note-list)
-      (incf i))
+      (incf i)
+      (setf prev-tone-number (tone-to-number tone octave)))
     (register-note-list *sequencer* note-list)
     (start-sequencer *sequencer* 120)))
