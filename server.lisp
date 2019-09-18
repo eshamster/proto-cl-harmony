@@ -66,6 +66,16 @@
                                         (markup (:option :value kind-value kind)))))))))
                     (:div
                      (:button :id "play-scale-btn" "Play Scale"))
+
+                    (:h2 "Harmony")
+                    (:table
+                     (:tr (:td (:button :id "play-harmony-1-btn" "I"))
+                          (:td (:button :id "play-harmony-2-btn" "II"))
+                          (:td (:button :id "play-harmony-3-btn" "III"))
+                          (:td (:button :id "play-harmony-4-btn" "IV")))
+                     (:tr (:td (:button :id "play-harmony-5-btn" "V"))
+                          (:td (:button :id "play-harmony-6-btn" "VI"))
+                          (:td (:button :id "play-harmony-7-btn" "VII"))))
                     (:script :src "js/main.js" nil)))))))
 
 (defun stop ()

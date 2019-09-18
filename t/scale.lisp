@@ -4,18 +4,10 @@
         :rove
         :ps-experiment
         :parenscript
-        :ps-experiment/t/test-utils))
+        :ps-experiment/t/test-utils)
+  (:import-from :proto-cl-harmony/t/test-utils
+                :same-list-p))
 (in-package :proto-cl-harmony/t/scale)
-
-(defun.ps+ same-list-p (a b)
-  (unless (= (length a) (length b))
-    (return-from same-list-p nil))
-  (loop
-     :for x :in a
-     :for y :in b
-     :do (unless (eq x y)
-           (return-from same-list-p nil)))
-  t)
 
 (deftest.ps+ for-make-scale
   (let ((list '((:major :c  (:c  :d  :e  :f  :g  :a  :b))

@@ -7,6 +7,8 @@
                 :tone-to-number)
   (:import-from :proto-cl-harmony/js/scale
                 :make-scale)
+  (:import-from :proto-cl-harmony/js/harmony
+                :make-harmony)
   (:import-from :proto-cl-harmony/js/sequencer
                 :make-note
                 :init-sequencer
@@ -20,26 +22,37 @@
 
 (enable-ps-experiment-syntax)
 
-(def-top-level-form.ps "initialize"
-  (add-event-listener "play-scale-btn" "click" #'start-play-scale))
-
 (defvar.ps+ *sequencer* nil)
 (defvar.ps+ *playing-p* nil)
 
-(defvar.ps+ *temp-interval* 0.5)
+(def-top-level-form.ps "initialize"
+  (add-event-listener "play-scale-btn" "click" #'start-play-scale)
+  (dotimes (i 7)
+    (let ((num-in-scale (1+ i)))
+      (add-event-listener (+ "play-harmony-" num-in-scale "-btn") "click"
+                          (lambda ()
+                            (start-play-harmony num-in-scale))))))
 
-(defun.ps init-audioctx ()
-  (new (#j.AudioContext#)))
+;; --- utils --- ;;
+
+(defun.ps init-sequencer-if-requied ()
+  (unless *sequencer*
+    (setf *sequencer* (init-sequencer (new (#j.AudioContext#))))))
+
+(defun.ps+ make-scale-by-input ()
+  (let ((base-tone (get-value "scale-base-tone"))
+        (kind      (get-value "scale-kind")))
+    (make-scale base-tone kind)))
+
+;; --- player --- ;;
 
 (defun.ps+ start-play-scale ()
-  (unless *sequencer*
-    (setf *sequencer* (init-sequencer (init-audioctx))))
+  (init-sequencer-if-requied)
   (let* ((note-list (list))
+         (bpm 120)
          (tick (get-quater-note-tick))
-         (base-tone (get-value "scale-base-tone"))
-         (octave    (get-value "scale-octave"))
-         (kind      (get-value "scale-kind"))
-         (scale (make-scale base-tone kind))
+         (octave (get-value "scale-octave"))
+         (scale (make-scale-by-input))
          (i 0)
          (prev-tone-number (tone-to-number (car scale) octave)))
     (dolist (tone (append scale (car scale)))
@@ -52,4 +65,19 @@
       (incf i)
       (setf prev-tone-number (tone-to-number tone octave)))
     (register-note-list *sequencer* note-list)
-    (start-sequencer *sequencer* 120)))
+    (start-sequencer *sequencer* bpm)))
+
+(defun.ps+ start-play-harmony (num-in-scale)
+  (unless *sequencer*
+    (init-sequencer-if-requied))
+  (let ((note-list (list))
+        (tick (get-quater-note-tick))
+        (bpm 120)
+        (scale (make-scale-by-input)))
+    (dolist (tone (make-harmony scale num-in-scale))
+      (push (make-note :freq (get-tone-freq tone 0)
+                       :start-tick  0
+                       :resume-tick (* tick 2))
+            note-list))
+    (register-note-list *sequencer* note-list)
+    (start-sequencer *sequencer* bpm)))
