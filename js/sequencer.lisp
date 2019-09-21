@@ -7,7 +7,9 @@
            :init-sequencer
            :start-sequencer
            :register-note-list
-           :get-quater-note-tick))
+           :get-quater-note-tick)
+  (:import-from :proto-cl-harmony/js/tone
+                :get-tone-freq))
 (in-package :proto-cl-harmony/js/sequencer)
 
 (enable-ps-experiment-syntax)
@@ -19,7 +21,8 @@
 (defvar.ps+ *detect-ms* 200)
 
 (defstruct.ps+ note
-    freq
+    tone
+  octave
   start-tick
   resume-tick)
 
@@ -55,7 +58,9 @@
            (let ((start-tick (note-start-tick note))
                  (resume-tick (note-resume-tick note))
                  (osc (new (#j.OscillatorNode# audioctx))))
-             (setf osc.frequency.value (note-freq note))
+             (setf osc.frequency.value
+                   (get-tone-freq (note-tone note)
+                                  (note-octave note)))
              (chain osc
                     (connect audioctx.destination))
              (osc.start (+ t0 (tick-to-sec start-tick bpm)))

@@ -9,8 +9,7 @@
                 :make-note
                 :get-quater-note-tick)
   (:import-from :proto-cl-harmony/js/tone
-                :calc-tone-by-diff
-                :get-tone-freq))
+                :calc-tone-by-diff))
 (in-package :proto-cl-harmony/js/mml-parser)
 
 (enable-ps-experiment-syntax)
@@ -66,7 +65,7 @@ Support tiny subset of MML (Music Macro Language)
       (let* ((octave (mml-octave-to-sequencer-octave
                       tone (mml-state-octave state)))
              (note (make-note
-                    :freq (get-tone-freq tone octave)
+                    :tone tone :octave octave
                     :start-tick (mml-state-sum-tick state)
                     :resume-tick (mml-state-tick state))))
         (incf (mml-state-sum-tick state)

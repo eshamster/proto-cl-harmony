@@ -3,7 +3,6 @@
         :ps-experiment
         :parenscript)
   (:import-from :proto-cl-harmony/js/tone
-                :get-tone-freq
                 :tone-to-number)
   (:import-from :proto-cl-harmony/js/scale
                 :make-scale)
@@ -63,7 +62,8 @@
     (dolist (tone (append scale (car scale)))
       (when (< (tone-to-number tone octave) prev-tone-number)
         (incf octave))
-      (push (make-note :freq (get-tone-freq tone octave)
+      (push (make-note :tone tone
+                       :octave octave
                        :start-tick  (* i tick)
                        :resume-tick tick)
             note-list)
@@ -80,7 +80,8 @@
         (bpm 120)
         (scale (make-scale-by-input)))
     (dolist (tone (make-harmony scale num-in-scale))
-      (push (make-note :freq (get-tone-freq tone 0)
+      (push (make-note :tone tone
+                       :octave 0
                        :start-tick  0
                        :resume-tick (* tick 2))
             note-list))
