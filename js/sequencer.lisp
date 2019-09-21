@@ -2,7 +2,8 @@
   (:use :cl
         :ps-experiment
         :parenscript)
-  (:export :make-note
+  (:export :note
+           :make-note
            :init-sequencer
            :start-sequencer
            :register-note-list

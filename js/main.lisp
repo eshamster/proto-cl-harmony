@@ -9,6 +9,8 @@
                 :make-scale)
   (:import-from :proto-cl-harmony/js/harmony
                 :make-harmony)
+  (:import-from :proto-cl-harmony/js/mml-parser
+                :parse-mml)
   (:import-from :proto-cl-harmony/js/sequencer
                 :make-note
                 :init-sequencer
@@ -31,7 +33,10 @@
     (let ((num-in-scale (1+ i)))
       (add-event-listener (+ "play-harmony-" num-in-scale "-btn") "click"
                           (lambda ()
-                            (start-play-harmony num-in-scale))))))
+                            (start-play-harmony num-in-scale)))))
+  (add-event-listener "play-melody-btn" "click"
+                      (lambda ()
+                        (start-play-meolody (get-value "mml-input")))))
 
 ;; --- utils --- ;;
 
@@ -81,3 +86,11 @@
             note-list))
     (register-note-list *sequencer* note-list)
     (start-sequencer *sequencer* bpm)))
+
+(defun.ps start-play-meolody (mml-str)
+  (init-sequencer-if-requied)
+  (let ((bpm 120))
+    (try (progn
+           (register-note-list *sequencer* (parse-mml mml-str))
+           (start-sequencer *sequencer* bpm))
+         (:catch (e) (alert (+ "Error: " e))))))

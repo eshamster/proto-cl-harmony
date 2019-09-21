@@ -76,6 +76,12 @@
                      (:tr (:td (:button :id "play-harmony-5-btn" "V"))
                           (:td (:button :id "play-harmony-6-btn" "VI"))
                           (:td (:button :id "play-harmony-7-btn" "VII"))))
+
+                    (:h2 "Melody by tiny MML (Music Macro Language)")
+                    (:div
+                     (:input :id "mml-input" :type "text"))
+                    (:div
+                     (:button :id "play-melody-btn" "Play Melody"))
                     (:script :src "js/main.js" nil)))))))
 
 (defun stop ()
