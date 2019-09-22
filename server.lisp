@@ -82,6 +82,7 @@
                      (:input :id "mml-input" :type "text"))
                     (:div
                      (:button :id "play-melody-btn" "Play Melody"))
+                    (:table :id "measure-table" nil)
                     (:script :src "js/main.js" nil)))))))
 
 (defun stop ()

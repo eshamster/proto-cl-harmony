@@ -12,13 +12,19 @@
                 :parse-mml)
   (:import-from :proto-cl-harmony/js/sequencer
                 :make-note
+                :note-tone
+                :note-octave
+                :note-resume-tick
                 :init-sequencer
                 :start-sequencer
                 :register-note-list
-                :get-quater-note-tick)
+                :get-quater-note-tick
+                :calc-last-measure
+                :calc-notes-in-measure)
   (:import-from :proto-cl-harmony/js/utils
                 :get-value
-                :add-event-listener))
+                :add-event-listener
+                :set-inner))
 (in-package :proto-cl-harmony/js/main)
 
 (enable-ps-experiment-syntax)
@@ -93,5 +99,35 @@
   (let ((bpm 120))
     (try (progn
            (register-note-list *sequencer* (parse-mml mml-str))
+           (let ((notes-in-measures (list)))
+             (dotimes (measure (calc-last-measure *sequencer*))
+               (push (calc-notes-in-measure *sequencer* measure)
+                     notes-in-measures))
+             (setf notes-in-measures (reverse notes-in-measures))
+             (let ((inner ""))
+               (macrolet ((with-tag (tag &body body)
+                            `(progn (incf inner ,(format nil "<~A>"  tag))
+                                    ,@body
+                                    (incf inner ,(format nil "</~A>" tag)))))
+                 (with-tag "tr"
+                   (with-tag "th"
+                     (incf inner "Measure"))
+                   (with-tag "th"
+                     (incf inner "Notes")))
+                 (dotimes (measure (length notes-in-measures))
+                   (with-tag "tr"
+                     (with-tag "td"
+                       (incf inner (1+ measure)))
+                     (with-tag "td"
+                       (dolist (note (nth measure notes-in-measures))
+                         (incf inner (note-tone note))
+                         (incf inner (tick-to-len (note-resume-tick note)))
+                         (incf inner ","))))))
+               (set-inner "measure-table" inner)))
            (start-sequencer *sequencer* bpm))
          (:catch (e) (alert (+ "Error: " e))))))
+
+;; TODO: Process dot. (Ex. 480 + 240 -> 4.)
+(defun.ps+ tick-to-len (tick)
+  (/ (* 4 (get-quater-note-tick))
+     tick))

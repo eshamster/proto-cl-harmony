@@ -4,6 +4,10 @@
         :parenscript)
   (:export :note
            :make-note
+           :note-tone
+           :note-octave
+           :note-start-tick
+           :note-resume-tick
            :init-sequencer
            :start-sequencer
            :register-note-list
