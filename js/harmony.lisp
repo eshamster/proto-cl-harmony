@@ -7,8 +7,14 @@
            :harmony-base-tone
            :harmony-tone-list
            :harmony-kind
-           :harmony-substitute-p)
+           :harmony-substitute-p
+           :weighted-harmony
+           :weighted-harmony-harmony
+           :weighted-harmony-weight
+           :calc-candidate-harmony-with-weight
+           :harmony-to-string)
   (:import-from :proto-cl-harmony/js/sequencer
+                :note-tone
                 :note-resume-tick
                 :get-quater-note-tick)
   (:import-from :proto-cl-harmony/js/tone
@@ -45,6 +51,74 @@
                 :substitute-p (ecase base-number
                                 ((1 4 5)   nil)
                                 ((2 3 6 7) t)))))))
+
+;; Some prohibited progressions are excluded
+;;   1. D (Dominant) -> SD (Sub Dominant)
+;;   2. Substitute chord -> Dominant chord
+
+(defstruct.ps+ weighted-harmony harmony (weight 0))
+
+(defun.ps+ calc-candidate-harmony-with-weight (scale notes-in-measure)
+  (let ((candidates (loop :for i :from 1 :to 7
+                       :collect (make-weighted-harmony
+                                 :harmony (make-harmony-by scale i)))))
+    (when (= (length notes-in-measure) 0)
+      (dolist (candidate candidates)
+        (setf (weighted-harmony-weight candidate) 1))
+      (return-from calc-candidate-harmony-with-weight candidates))
+    (dolist (c candidates)
+      (dotimes (i (length notes-in-measure))
+        (let ((note (nth i notes-in-measure)))
+          (incf (weighted-harmony-weight c)
+                (calc-score-of-harmony-by-tone
+                 :harmony          (weighted-harmony-harmony c)
+                 :tone             (note-tone note)
+                 :note-resume-tick (note-resume-tick note)
+                 :first-tone-p     (= i 0))))))
+    (sort (remove-if (lambda (c) (= (weighted-harmony-weight c) 0))
+                     candidates)
+          (lambda (a b)
+            (> (weighted-harmony-weight a)
+               (weighted-harmony-weight b))))))
+
+;; Not well-tuned values
+(defparameter.ps+ *score-table*
+    (let ((table (make-hash-table)))
+      (dolist (pair '((:included-tone 1)
+                      ;; Note: tone-len is represented as
+                      ;;       a relative value to quater note.
+                      (:scale-for-tone-len 0.8)
+                      (:base-tone 2)
+                      (:first-tone 3) ; first in a measure
+                      (:not-substitute 1)))
+        (setf (gethash (car pair) table)
+              (cadr pair)))
+      table))
+
+(defun.ps+ calc-score-of-harmony-by-tone (&key harmony
+                                               tone
+                                               note-resume-tick
+                                               first-tone-p
+                                               (score-table *score-table*))
+  (unless (harmony-include-tone-p harmony tone)
+    (return-from calc-score-of-harmony-by-tone 0))
+  (flet ((get-score (key)
+           (gethash key score-table)))
+    (let ((score 0))
+      (incf score
+            (* (get-score :included-tone)
+               (get-score :scale-for-tone-len)
+               (/ note-resume-tick (get-quater-note-tick))))
+      (when (eq (harmony-base-tone harmony) tone)
+        (incf score (get-score :base-tone)))
+      (when first-tone-p
+        (incf score (get-score :first-tone)))
+      (unless (harmony-substitute-p harmony)
+        (incf score (get-score :not-substitute)))
+      score)))
+
+(defun.ps+ harmony-include-tone-p (harmony tone)
+  (find tone (harmony-tone-list harmony)))
 
 (defun.ps+ harmony-to-string (harmony)
   ;; Note: Only support basic 3 notes harmony

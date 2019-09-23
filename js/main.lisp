@@ -8,7 +8,11 @@
                 :make-scale)
   (:import-from :proto-cl-harmony/js/harmony
                 :make-harmony-by
-                :harmony-tone-list)
+                :harmony-tone-list
+                :weighted-harmony-harmony
+                :weighted-harmony-weight
+                :calc-candidate-harmony-with-weight
+                :harmony-to-string)
   (:import-from :proto-cl-harmony/js/mml-parser
                 :parse-mml)
   (:import-from :proto-cl-harmony/js/sequencer
@@ -115,16 +119,25 @@
                    (with-tag "th"
                      (incf inner "Measure"))
                    (with-tag "th"
-                     (incf inner "Notes")))
+                     (incf inner "Notes"))
+                   (with-tag "th"
+                     (incf inner "Candidate Harmonies")))
                  (dotimes (measure (length notes-in-measures))
                    (with-tag "tr"
                      (with-tag "td"
                        (incf inner (1+ measure)))
-                     (with-tag "td"
-                       (dolist (note (nth measure notes-in-measures))
-                         (incf inner (note-tone note))
-                         (incf inner (tick-to-len (note-resume-tick note)))
-                         (incf inner ","))))))
+                     (let ((notes-in-measure (nth measure notes-in-measures)))
+                       (with-tag "td"
+                         (dolist (note notes-in-measure)
+                           (incf inner (note-tone note))
+                           (incf inner (tick-to-len (note-resume-tick note)))
+                           (incf inner ",")))
+                       (let ((candidates (calc-candidate-harmony-with-weight
+                                          (make-scale-by-input) notes-in-measure)))
+                         (with-tag "td"
+                           (dolist (c candidates)
+                             (incf inner (harmony-to-string c.harmony))
+                             (incf inner (+ "(" (c.weight.to-fixed 1) "),")))))))))
                (set-inner "measure-table" inner)))
            (start-sequencer *sequencer* bpm))
          (:catch (e) (alert (+ "Error: " e))))))
