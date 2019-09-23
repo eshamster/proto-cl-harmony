@@ -7,7 +7,8 @@
   (:import-from :proto-cl-harmony/js/scale
                 :make-scale)
   (:import-from :proto-cl-harmony/js/harmony
-                :make-harmony)
+                :make-harmony-by
+                :harmony-tone-list)
   (:import-from :proto-cl-harmony/js/mml-parser
                 :parse-mml)
   (:import-from :proto-cl-harmony/js/sequencer
@@ -85,7 +86,8 @@
         (tick (get-quater-note-tick))
         (bpm 120)
         (scale (make-scale-by-input)))
-    (dolist (tone (make-harmony scale num-in-scale))
+    (dolist (tone (harmony-tone-list
+                   (make-harmony-by scale num-in-scale)))
       (push (make-note :tone tone
                        :octave 0
                        :start-tick  0
