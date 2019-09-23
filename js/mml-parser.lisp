@@ -9,7 +9,9 @@
                 :make-note
                 :get-quater-note-tick)
   (:import-from :proto-cl-harmony/js/tone
-                :calc-tone-by-diff))
+                :calc-tone-by-diff)
+  (:import-from :proto-cl-harmony/js/utils
+                :split-string-to-list))
 (in-package :proto-cl-harmony/js/mml-parser)
 
 (enable-ps-experiment-syntax)
@@ -228,13 +230,13 @@ Support tiny subset of MML (Music Macro Language)
 (defun split-string-to-op (str)
   ;; "AB C" -> ("A" "B" "C")
   (remove " " (mapcar #'string
-                      (coerce (string-upcase str) 'list))
+                      (split-string-to-list (string-upcase str)))
           :test #'string=))
 
 (defun.ps-only split-string-to-op (str)
-  (let* ((upper-str (str.to-upper-case))
-         (trimmed-str (upper-str.replace (regex "/ /g") "")))
-    (trimmed-str.split "")))
+  (let* ((upper-str (str.to-upper-case)))
+    (split-string-to-list
+     (upper-str.replace (regex "/ /g") ""))))
 
 (defun number-op-list-to-number (op-list)
   (parse-integer (format nil "~{~A~}" op-list)))

@@ -7,12 +7,14 @@
            :number-to-tone
            :calc-tone-by-diff
            :sharp-tone-p
-           :flat-tone-p))
+           :flat-tone-p
+           :tone-to-string)
+  (:import-from :proto-cl-harmony/js/utils
+                :split-string-to-list
+                :concatenate-string))
 (in-package :proto-cl-harmony/js/tone)
 
 (enable-ps-experiment-syntax)
-
-;; --- tone --- ;;
 
 (defvar.ps+ *tone-name-list*
     '((:a) (:a+ :b-)
@@ -86,3 +88,24 @@ See the document of tone-to-number for detail."
     table))
 
 (defvar.ps+ *tone-table* (make-tone-table))
+
+(defun.ps+ tone-to-string (tone)
+  ;; Note: Only support no or one sharp [flat]
+  (let ((splitted (split-keyword-to-string-list tone)))
+    (case (length splitted)
+      (0 (error "The tone is empty"))
+      (1 (car splitted))
+      (2 (let ((sign (cadr splitted)))
+           (cond ((or (string= sign "+")
+                      (string= sign "#"))
+                  (concatenate-string (car splitted) "♯"))
+                 ((or (string= sign "-"))
+                  (concatenate-string (car splitted) "♭"))
+                 (t (error "Not recognized sign: ~A" signe))))))))
+
+(defun split-keyword-to-string-list (keyword)
+  ;; :c+ -> ("C" "+")
+  (split-string-to-list (symbol-name keyword)))
+
+(defun.ps-only split-keyword-to-string-list (keyword)
+  (split-string-to-list (keyword.to-upper-case)))

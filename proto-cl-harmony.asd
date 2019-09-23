@@ -43,5 +43,6 @@
                "proto-cl-harmony/t/harmony"
                "proto-cl-harmony/t/mml-parser"
                "proto-cl-harmony/t/scale"
-               "proto-cl-harmony/t/tone")
+               "proto-cl-harmony/t/tone"
+               "proto-cl-harmony/t/utils")
   :perform (test-op (o c) (symbol-call :rove '#:run c)))

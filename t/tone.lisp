@@ -70,3 +70,11 @@
       (if flat-p
           (ok (flat-tone-p tone))
           (ok (not (flat-tone-p tone)))))))
+
+(deftest.ps+ for-tone-to-string
+  (dolist (pair '((:a  "A")
+                  (:a+ "A♯")
+                  (:a- "A♭")))
+    (let ((tone     (nth 0 pair))
+          (expected (nth 1 pair)))
+      (ok (string= (tone-to-string tone) expected)))))
