@@ -71,3 +71,34 @@
             (if substitute-p
                 (ok (harmony-substitute-p harmony))
                 (ok (not (harmony-substitute-p harmony))))))))))
+
+(deftest.ps+ for-harmony-to-string
+  (let ((scale (make-scale :c :major))
+        (list '((:make-kind :normal
+                 :base-num  1
+                 :string    "C")
+                (:make-kind :normal
+                 :base-num  2
+                 :string    "Dm")
+                (:make-kind :normal
+                 :base-num  3
+                 :string    "Em")
+                (:make-kind :normal
+                 :base-num  4
+                 :string    "F")
+                (:make-kind :normal
+                 :base-num  5
+                 :string    "G")
+                (:make-kind :normal
+                 :base-num  6
+                 :string    "Am")
+                (:make-kind :normal
+                 :base-num  7
+                 :string    "Bdim"))))
+    (dolist (pair list)
+      (let ((make-kind    (getf pair :make-kind))
+            (num-in-scale (getf pair :base-num))
+            (expected     (getf pair :string)))
+        (testing (format nil "num-in-scale: ~D" num-in-scale)
+          (let ((harmony (make-harmony-by scale num-in-scale make-kind)))
+            (ok (string= (harmony-to-string harmony) expected))))))))
