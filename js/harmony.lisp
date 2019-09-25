@@ -12,7 +12,8 @@
            :weighted-harmony-harmony
            :weighted-harmony-weight
            :calc-candidate-harmony-with-weight
-           :harmony-to-string)
+           :harmony-to-string
+           :select-harmonies)
   (:import-from :proto-cl-harmony/js/sequencer
                 :note-tone
                 :note-resume-tick
@@ -25,6 +26,8 @@
 (in-package :proto-cl-harmony/js/harmony)
 
 (enable-ps-experiment-syntax)
+
+;; --- basic --- ;;
 
 (defstruct.ps+ harmony
     base-tone
@@ -52,9 +55,7 @@
                                 ((1 4 5)   nil)
                                 ((2 3 6 7) t)))))))
 
-;; Some prohibited progressions are excluded
-;;   1. D (Dominant) -> SD (Sub Dominant)
-;;   2. Substitute chord -> Dominant chord
+;; --- calc candidates --- ;;
 
 (defstruct.ps+ weighted-harmony harmony (weight 0))
 
@@ -119,6 +120,59 @@
 
 (defun.ps+ harmony-include-tone-p (harmony tone)
   (find tone (harmony-tone-list harmony)))
+
+;; --- select harmony --- ;;
+
+;; TODO: Reconsider interface
+
+(defun.ps+ select-harmonies (weighted-harmony-lists)
+  (labels ((rec ()
+             ;; XXX: Prevent too many recursions
+             (let ((result (list))
+                   (prev-harmony nil))
+               (dolist (whl weighted-harmony-lists)
+                 (let ((h (select-harmony whl prev-harmony)))
+                   (if h
+                       (progn (push h result)
+                              (setf prev-harmony h))
+                       (return-from rec (rec)))))
+               (reverse result))))
+    (rec)))
+
+(defun.ps+ select-harmony (weighted-harmony-list prev-harmony)
+  (let ((sum 0))
+    (dolist (wh weighted-harmony-list)
+      (incf sum (weighted-harmony-weight wh)))
+    (let ((selector (* sum (rand1)))
+          (base 0))
+      (dolist (wh weighted-harmony-list)
+        (let ((next (+ base (weighted-harmony-weight wh))))
+          (when (< selector next)
+            (return-from select-harmony
+              (let ((h (weighted-harmony-harmony wh)))
+                (unless (prohibited-p prev-harmony h)
+                  h))))
+          (setf base next))))))
+
+(defun rand1 ()
+  (random 1.0))
+
+(defun.ps-only rand1 ()
+  (random))
+
+;; Some prohibited progressions are excluded
+;;   1. D (Dominant) -> SD (Sub Dominant)
+;;   2. Substitute chord -> Dominant chord
+(defun.ps+ prohibited-p (prev-harmony next-harmony)
+  (when prev-harmony
+    (or (and (eq (harmony-kind prev-harmony) :dominant)
+             (eq (harmony-kind next-harmony) :sub-dominant))
+        (and (eq (harmony-kind prev-harmony)
+                 (harmony-kind next-harmony))
+             (harmony-substitute-p prev-harmony)
+             (not (harmony-substitute-p next-harmony))))))
+
+;; --- utils --- ;;
 
 (defun.ps+ harmony-to-string (harmony)
   ;; Note: Only support basic 3 notes harmony

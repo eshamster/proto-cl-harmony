@@ -12,6 +12,7 @@
                 :weighted-harmony-harmony
                 :weighted-harmony-weight
                 :calc-candidate-harmony-with-weight
+                :select-harmonies
                 :harmony-to-string)
   (:import-from :proto-cl-harmony/js/mml-parser
                 :parse-mml)
@@ -24,6 +25,7 @@
                 :start-sequencer
                 :register-note-list
                 :get-quater-note-tick
+                :get-measure-tick
                 :calc-last-measure
                 :calc-notes-in-measure)
   (:import-from :proto-cl-harmony/js/utils
@@ -86,30 +88,42 @@
 (defun.ps+ start-play-harmony (num-in-scale)
   (unless *sequencer*
     (init-sequencer-if-requied))
-  (let ((note-list (list))
-        (tick (get-quater-note-tick))
+  (let ((tick (* 2 (get-quater-note-tick)))
         (bpm 120)
         (scale (make-scale-by-input)))
-    (dolist (tone (harmony-tone-list
-                   (make-harmony-by scale num-in-scale)))
-      (push (make-note :tone tone
-                       :octave 0
-                       :start-tick  0
-                       :resume-tick (* tick 2))
-            note-list))
-    (register-note-list *sequencer* note-list)
+    (add-harmony-to-sequencer :sequencer   *sequencer*
+                              :harmony     (make-harmony-by scale num-in-scale)
+                              :start-tick  0
+                              :resume-tick tick)
     (start-sequencer *sequencer* bpm)))
+
+(defun.ps+ add-harmony-to-sequencer (&key sequencer harmony start-tick resume-tick)
+  (let ((note-list (list)))
+    (dolist (tone (harmony-tone-list harmony))
+      (push (make-note :tone        tone
+                       :octave      0
+                       :start-tick  start-tick
+                       :resume-tick resume-tick)
+            note-list))
+    (register-note-list sequencer note-list)))
 
 (defun.ps start-play-meolody (mml-str)
   (init-sequencer-if-requied)
   (let ((bpm 120))
     (try (progn
            (register-note-list *sequencer* (parse-mml mml-str))
-           (let ((notes-in-measures (list)))
+           (let ((notes-in-measures (list))
+                 (weighted-harmony-lists (list))
+                 (selected-harmoies nil)
+                 (scale (make-scale-by-input)))
              (dotimes (measure (calc-last-measure *sequencer*))
-               (push (calc-notes-in-measure *sequencer* measure)
-                     notes-in-measures))
+               (let ((notes (calc-notes-in-measure *sequencer* measure)))
+                 (push notes notes-in-measures)
+                 (push (calc-candidate-harmony-with-weight scale notes)
+                       weighted-harmony-lists)))
              (setf notes-in-measures (reverse notes-in-measures))
+             (setf weighted-harmony-lists (reverse weighted-harmony-lists))
+             (setf selected-harmoies (select-harmonies weighted-harmony-lists))
              (let ((inner ""))
                (macrolet ((with-tag (tag &body body)
                             `(progn (incf inner ,(format nil "<~A>"  tag))
@@ -121,7 +135,9 @@
                    (with-tag "th"
                      (incf inner "Notes"))
                    (with-tag "th"
-                     (incf inner "Candidate Harmonies")))
+                     (incf inner "Candidate Harmonies"))
+                   (with-tag "th"
+                     (incf inner "Selected")))
                  (dotimes (measure (length notes-in-measures))
                    (with-tag "tr"
                      (with-tag "td"
@@ -131,15 +147,24 @@
                          (dolist (note notes-in-measure)
                            (incf inner (note-tone note))
                            (incf inner (tick-to-len (note-resume-tick note)))
-                           (incf inner ",")))
-                       (let ((candidates (calc-candidate-harmony-with-weight
-                                          (make-scale-by-input) notes-in-measure)))
-                         (with-tag "td"
-                           (dolist (c candidates)
-                             (incf inner (harmony-to-string c.harmony))
-                             (incf inner (+ "(" (c.weight.to-fixed 1) "),")))))))))
-               (set-inner "measure-table" inner)))
-           (start-sequencer *sequencer* bpm))
+                           (incf inner ","))))
+                     (let ((candidates (nth measure weighted-harmony-lists)))
+                       (with-tag "td"
+                         (dolist (c candidates)
+                           (incf inner (harmony-to-string c.harmony))
+                           (incf inner (+ "(" (c.weight.to-fixed 1) "),")))))
+                     (with-tag "td"
+                       (incf inner (harmony-to-string (nth measure selected-harmoies)))))))
+               (set-inner "measure-table" inner))
+             ;; Add harmony and play
+             (let ((harmony-tick (get-measure-tick *sequencer*)))
+               (dotimes (i (length selected-harmoies))
+                 (add-harmony-to-sequencer
+                  :sequencer   *sequencer*
+                  :harmony     (nth i selected-harmoies)
+                  :start-tick  (* i harmony-tick)
+                  :resume-tick harmony-tick)))
+             (start-sequencer *sequencer* bpm)))
          (:catch (e) (alert (+ "Error: " e))))))
 
 ;; TODO: Process dot. (Ex. 480 + 240 -> 4.)

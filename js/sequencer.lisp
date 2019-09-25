@@ -12,6 +12,7 @@
            :start-sequencer
            :register-note-list
            :get-quater-note-tick
+           :get-measure-tick
            :calc-last-measure
            :calc-notes-in-measure)
   (:import-from :proto-cl-harmony/js/tone
@@ -43,6 +44,11 @@
 
 (defun.ps+ get-quater-note-tick ()
   *quater-note-tick*)
+
+(defun.ps+ get-measure-tick (sequencer)
+  (/ (* (get-quater-note-tick) 4
+        (sequencer-beat-count sequencer))
+     (sequencer-beat-base sequencer)))
 
 (defun.ps+ init-sequencer (audioctx)
   (make-sequencer :audioctx audioctx))
@@ -136,17 +142,13 @@
 
 (defun.ps+ queue-notes (queue note-list)
   "Sort notes by its start-tick and queue them."
-  (let ((copied-list (list)))
-    (dolist (n note-list)
-      (check-type n note)
-      (push n copied-list))
-    (setf copied-list
-          (sort copied-list
-                (lambda (a b)
-                  (> (note-start-tick a)
-                     (note-start-tick b)))))
-    (dolist (n copied-list)
-      (push n queue))))
+  (dolist (n note-list)
+    (push n queue))
+  (setf queue
+        (sort queue
+              (lambda (a b)
+                (< (note-start-tick a)
+                   (note-start-tick b))))))
 
 (defun.ps+ dequeue-notes (queue current-tick detect-tick)
   "Dequeue notes if its start-tick is under current-tick+detect-tick"
