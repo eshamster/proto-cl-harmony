@@ -29,6 +29,7 @@
                 :calc-last-measure
                 :calc-notes-in-measure)
   (:import-from :proto-cl-harmony/js/utils
+                :get-elem
                 :get-value
                 :add-event-listener
                 :set-inner))
@@ -157,13 +158,14 @@
                        (incf inner (harmony-to-string (nth measure selected-harmoies)))))))
                (set-inner "measure-table" inner))
              ;; Add harmony and play
-             (let ((harmony-tick (get-measure-tick *sequencer*)))
-               (dotimes (i (length selected-harmoies))
-                 (add-harmony-to-sequencer
-                  :sequencer   *sequencer*
-                  :harmony     (nth i selected-harmoies)
-                  :start-tick  (* i harmony-tick)
-                  :resume-tick harmony-tick)))
+             (when (@ (get-elem "with-harmony") checked)
+               (let ((harmony-tick (get-measure-tick *sequencer*)))
+                 (dotimes (i (length selected-harmoies))
+                   (add-harmony-to-sequencer
+                    :sequencer   *sequencer*
+                    :harmony     (nth i selected-harmoies)
+                    :start-tick  (* i harmony-tick)
+                    :resume-tick harmony-tick))))
              (start-sequencer *sequencer* bpm)))
          (:catch (e) (alert (+ "Error: " e))))))
 

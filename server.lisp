@@ -78,8 +78,11 @@
                           (:td (:button :id "play-harmony-7-btn" "VII"))))
 
                     (:h2 "Melody by tiny MML (Music Macro Language)")
-                    (:div
-                     (:input :id "mml-input" :type "text"))
+                    (:table
+                     (:tr (:th "MML")
+                          (:td (:input :id "mml-input" :type "text")))
+                     (:tr (:th "With Harmony")
+                          (:td (:input :id "with-harmony" :type "checkbox"))))
                     (:div
                      (:button :id "play-melody-btn" "Play Melody"))
                     (:table :id "measure-table" nil)
