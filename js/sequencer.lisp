@@ -26,12 +26,14 @@
 (defvar.ps+ *quater-note-tick* 480)
 (defvar.ps+ *monitor-ms* 100)
 (defvar.ps+ *detect-ms* 200)
+(defvar.ps+ *max-velocity* 127)
 
 (defstruct.ps+ note
     tone
   octave
   start-tick
-  resume-tick)
+  resume-tick
+  (velocity *max-velocity*))
 
 (defstruct.ps+ sequencer
     audioctx
@@ -71,11 +73,14 @@
          (dolist (note notes)
            (let ((start-tick (note-start-tick note))
                  (resume-tick (note-resume-tick note))
-                 (osc (new (#j.OscillatorNode# audioctx))))
+                 (osc (new (#j.OscillatorNode# audioctx)))
+                 (gain-node (new (#j.GainNode# audioctx))))
              (setf osc.frequency.value
                    (get-tone-freq (note-tone note)
-                                  (note-octave note)))
+                                  (note-octave note))
+                   gain-node.gain.value (/ (note-velocity note) *max-velocity*))
              (chain osc
+                    (connect gain-node)
                     (connect audioctx.destination))
              (osc.start (+ t0 (tick-to-sec start-tick bpm)))
              (osc.stop  (+ t0 (tick-to-sec (+ start-tick resume-tick) bpm)))))))

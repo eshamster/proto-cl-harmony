@@ -40,6 +40,8 @@
 (defvar.ps+ *sequencer* nil)
 (defvar.ps+ *playing-p* nil)
 
+(defvar.ps+ *harmony-velocity* 48)
+
 (def-top-level-form.ps "initialize"
   (add-event-listener "play-scale-btn" "click" #'start-play-scale)
   (dotimes (i 7)
@@ -104,7 +106,8 @@
       (push (make-note :tone        tone
                        :octave      0
                        :start-tick  start-tick
-                       :resume-tick resume-tick)
+                       :resume-tick resume-tick
+                       :velocity    *harmony-velocity*)
             note-list))
     (register-note-list sequencer note-list)))
 
