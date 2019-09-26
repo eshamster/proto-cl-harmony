@@ -33,3 +33,17 @@
             (expected (nth 1 pair)))
         (ok (string= (apply #'concatenate-string str-list)
                      expected))))))
+
+(deftest.ps+ for-string-ecase
+  (let ((str "test"))
+    (ok (= (string-ecase str
+             ("aaa"  1)
+             ("test" 2)
+             ("bbb"  3))
+           2)))
+  (let ((str "not-included"))
+    (ok (signals (string-ecase str
+                   ("aaa"  1)
+                   ("test" 2)
+                   ("bbb"  3))
+                 'error))))

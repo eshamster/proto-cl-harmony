@@ -11,7 +11,8 @@
   (:import-from :proto-cl-harmony/js/tone
                 :calc-tone-by-diff)
   (:import-from :proto-cl-harmony/js/utils
-                :split-string-to-list))
+                :split-string-to-list
+                :string-ecase))
 (in-package :proto-cl-harmony/js/mml-parser)
 
 (enable-ps-experiment-syntax)
@@ -192,15 +193,6 @@ Support tiny subset of MML (Music Macro Language)
 
 (defun tone-str-to-tone (tone-str)
   (intern tone-str (find-package "KEYWORD")))
-
-(defmacro.ps+ string-ecase (var &body rest)
-  (let ((g-var (gensym "VAR")))
-    `(let ((,g-var ,var))
-       (cond ,@(append (mapcar (lambda (line)
-                                 `((string= ,g-var ,(car line))
-                                   ,@(cdr line)))
-                               rest)
-                       `((t (error "Invalid string: ~A" ,g-var))))))))
 
 (defun.ps+ tone-len-to-tick (base-len dot-count)
   (let* ((base-tick (/ (* (get-quater-note-tick) 4)

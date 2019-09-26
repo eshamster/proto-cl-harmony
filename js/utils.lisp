@@ -10,7 +10,8 @@
    :add-event-listener
    ;; string
    :split-string-to-list
-   :concatenate-string))
+   :concatenate-string
+   :string-ecase))
 (in-package :proto-cl-harmony/js/utils)
 
 (enable-ps-experiment-syntax)
@@ -47,3 +48,12 @@
     (dolist (str strings)
       (incf result str))
     result))
+
+(defmacro.ps+ string-ecase (var &body rest)
+  (let ((g-var (gensym "VAR")))
+    `(let ((,g-var ,var))
+       (cond ,@(append (mapcar (lambda (line)
+                                 `((string= ,g-var ,(car line))
+                                   ,@(cdr line)))
+                               rest)
+                       `((t (error "Invalid string: ~A" ,g-var))))))))
