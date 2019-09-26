@@ -172,7 +172,18 @@
              (start-sequencer *sequencer* bpm)))
          (:catch (e) (alert (+ "Error: " e))))))
 
-;; TODO: Process dot. (Ex. 480 + 240 -> 4.)
-(defun.ps+ tick-to-len (tick)
-  (/ (* 4 (get-quater-note-tick))
-     tick))
+;; TODO: Process multiple dot.. (Ex. 480 + 240 + 120 -> 4..)
+(defun.ps tick-to-len (tick)
+  (labels ((calc-base-tick (candidate)
+             (cond ((> candidate tick)
+                    (calc-base-tick (/ candidate 2)))
+                   ((<= (* 2 candidate) tick)
+                    (calc-base-tick (* candidate 2)))
+                   (t candidate))))
+    (let* ((base-tick (calc-base-tick (get-quater-note-tick)))
+           (base-len  (floor (/ (* 4 (get-quater-note-tick)) base-tick))))
+      (+ ""
+         base-len
+         (if (>= (mod tick base-tick) (/ base-tick 2))
+             ". "
+             "")))))
