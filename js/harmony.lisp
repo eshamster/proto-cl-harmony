@@ -90,7 +90,7 @@
                       ;;       a relative value to quater note.
                       (:scale-for-tone-len 0.8)
                       (:base-tone 2)
-                      (:first-tone 3) ; first in a measure
+                      (:first-tone 4) ; first in a measure
                       (:not-substitute 1)))
         (setf (gethash (car pair) table)
               (cadr pair)))
@@ -125,19 +125,30 @@
 
 ;; TODO: Reconsider interface
 
-(defun.ps+ select-harmonies (weighted-harmony-lists)
+(defun.ps+ select-harmonies (weighted-harmony-lists &optional (playout 3))
   (labels ((rec ()
              ;; XXX: Prevent too many recursions
              (let ((result (list))
-                   (prev-harmony nil))
+                   (prev-harmony nil)
+                   (sum-weight 0))
                (dolist (whl weighted-harmony-lists)
-                 (let ((h (select-harmony whl prev-harmony)))
-                   (if h
-                       (progn (push h result)
-                              (setf prev-harmony h))
+                 (let ((wh (select-harmony whl prev-harmony)))
+                   (if wh
+                       (let ((w (weighted-harmony-weight  wh))
+                             (h (weighted-harmony-harmony wh)))
+                         (incf sum-weight w)
+                         (push h result)
+                         (setf prev-harmony h))
                        (return-from rec (rec)))))
-               (reverse result))))
-    (rec)))
+               (values (reverse result) sum-weight))))
+    (let ((max-weight 0)
+          results)
+      (dotimes (i playout)
+        (multiple-value-bind (harmony-list weight) (rec)
+          (when (> weight max-weight)
+            (setf results    harmony-list
+                  max-weight weight))))
+      results)))
 
 (defun.ps+ select-harmony (weighted-harmony-list prev-harmony)
   (let ((sum 0))
@@ -151,7 +162,7 @@
             (return-from select-harmony
               (let ((h (weighted-harmony-harmony wh)))
                 (unless (prohibited-p prev-harmony h)
-                  h))))
+                  wh))))
           (setf base next))))))
 
 (defun rand1 ()
