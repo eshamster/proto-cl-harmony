@@ -21,6 +21,7 @@
                 :note-tone
                 :note-octave
                 :note-resume-tick
+                :note-velocity
                 :init-sequencer
                 :start-sequencer
                 :register-note-list
@@ -40,6 +41,7 @@
 (defvar.ps+ *sequencer* nil)
 (defvar.ps+ *playing-p* nil)
 
+(defvar.ps+ *melody-velocity*  127)
 (defvar.ps+ *harmony-velocity* 48)
 
 (def-top-level-form.ps "initialize"
@@ -81,7 +83,8 @@
       (push (make-note :tone tone
                        :octave octave
                        :start-tick  (* i tick)
-                       :resume-tick tick)
+                       :resume-tick tick
+                       :velocity    *melody-velocity*)
             note-list)
       (incf i)
       (setf prev-tone-number (tone-to-number tone octave)))
@@ -115,7 +118,10 @@
   (init-sequencer-if-requied)
   (let ((bpm 120))
     (try (progn
-           (register-note-list *sequencer* (parse-mml mml-str))
+           (let ((notes (parse-mml mml-str)))
+             (dolist (n notes)
+               (setf (note-velocity n) *melody-velocity*))
+             (register-note-list *sequencer* notes))
            (let ((notes-in-measures (list))
                  (weighted-harmony-lists (list))
                  (selected-harmoies nil)

@@ -8,6 +8,7 @@
            :note-octave
            :note-start-tick
            :note-resume-tick
+           :note-velocity
            :init-sequencer
            :start-sequencer
            :register-note-list
