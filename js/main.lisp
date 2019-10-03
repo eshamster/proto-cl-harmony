@@ -53,7 +53,8 @@
                             (start-play-harmony num-in-scale)))))
   (add-event-listener "play-melody-btn" "click"
                       (lambda ()
-                        (start-play-meolody (get-value "mml-input")))))
+                        (start-play-meolody (get-value "mml-input"))))
+  (setup-melody-input))
 
 ;; --- utils --- ;;
 
@@ -114,9 +115,21 @@
             note-list))
     (register-note-list sequencer note-list)))
 
+;; - melody - ;;
+
+(defvar.ps+ *melody-bpm* 120)
+
+(defun.ps setup-melody-input ()
+  (add-event-listener
+   "melody-bpm" "input"
+   (lambda ()
+     (let ((val (get-value "melody-bpm")))
+       (set-inner "melody-bpm-value" val)
+       (setf *melody-bpm* val)))))
+
 (defun.ps start-play-meolody (mml-str)
   (init-sequencer-if-requied)
-  (let ((bpm 120))
+  (let ((bpm *melody-bpm*))
     (try (progn
            (let ((notes (parse-mml mml-str)))
              (dolist (n notes)

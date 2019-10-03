@@ -79,10 +79,14 @@
 
                     (:h2 "Melody by tiny MML (Music Macro Language)")
                     (:table
-                     (:tr (:th "MML")
-                          (:td (:input :id "mml-input" :type "text")))
                      (:tr (:th "With Harmony")
-                          (:td (:input :id "with-harmony" :type "checkbox"))))
+                          (:td (:input :id "with-harmony" :type "checkbox")))
+                     (:tr (:th "MML")
+                          (:td (:textarea :id "mml-input" "CDEFGAB<C")))
+                     (:tr (:th "BPM")
+                          (:td (:div :id "melody-bpm-value" 120)
+                               (:input :id "melody-bpm" :type :range
+                                       :min 20 :max 480 :value 120))))
                     (:div
                      (:button :id "play-melody-btn" "Play Melody"))
                     (:table :id "measure-table" nil)
