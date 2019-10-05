@@ -6,6 +6,7 @@
    ;; html
    :get-elem
    :get-value
+   :set-value
    :set-inner
    :add-event-listener
    ;; string
@@ -23,6 +24,10 @@
 
 (defun.ps get-value (id)
   (@ (get-elem id) value))
+
+(defun.ps set-value (id val)
+  (setf (@ (get-elem id) value)
+        val))
 
 (defun.ps set-inner (id value)
   (setf (@ (get-elem id) #j.innerHTML#)

@@ -3,7 +3,8 @@
         :ps-experiment
         :parenscript)
   (:import-from :proto-cl-harmony/js/tone
-                :tone-to-number)
+                :tone-to-number
+                :tone-to-string)
   (:import-from :proto-cl-harmony/js/scale
                 :make-scale)
   (:import-from :proto-cl-harmony/js/harmony
@@ -32,8 +33,10 @@
   (:import-from :proto-cl-harmony/js/utils
                 :get-elem
                 :get-value
+                :set-value
                 :add-event-listener
-                :set-inner))
+                :set-inner
+                :concatenate-string))
 (in-package :proto-cl-harmony/js/main)
 
 (enable-ps-experiment-syntax)
@@ -67,6 +70,13 @@
         (kind      (get-value "scale-kind")))
     (make-scale base-tone kind)))
 
+(defun.ps+ scale-to-string (scale)
+  (let ((result ""))
+    (dolist (tone scale)
+      (setf result
+            (concatenate-string result (tone-to-string tone) " ")))
+    result))
+
 ;; --- player --- ;;
 
 (defun.ps+ start-play-scale ()
@@ -78,6 +88,7 @@
          (scale (make-scale-by-input))
          (i 0)
          (prev-tone-number (tone-to-number (car scale) octave)))
+    (set-value "scale-display" (scale-to-string scale))
     (dolist (tone (append scale (car scale)))
       (when (< (tone-to-number tone octave) prev-tone-number)
         (incf octave))

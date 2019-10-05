@@ -66,6 +66,8 @@
                                         (markup (:option :value kind-value kind)))))))))
                     (:div
                      (:button :id "play-scale-btn" "Play Scale"))
+                    (:div
+                     (:input :id "scale-display" :type "text" :disabled t nil))
 
                     (:h2 "Harmony")
                     (:table
