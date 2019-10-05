@@ -18,18 +18,23 @@
 (enable-ps-experiment-syntax)
 
 #|
-Support tiny subset of MML (Music Macro Language)
+Support tiny subset of MML (Music Macro Language).
+The parse ignores case.
 
 <MML> := <block>...
-<block> := <note>|<octave>
+<block> := <note>|<octave>|<rest>
 
-<note> := <tone>[<tone-changer>...][integer["."...]]
+<note> := <tone>[<tone-changer>...][<note len>]
 <tone> := "A"|"B"|"C"|"D"|"E"|"F"|"G"
 <tone-changer> := "#"|"+"|"-"
 
 <octave> := <set octave>|<inc octave>
 <set octave> := "O"integer
 <inc octave> := "<"|">"
+
+<rest> := "R"[<note len>]
+
+<note len> := [integer["."...]] ;; Ex. 4 means quater note
 |#
 
 ;; --- parser --- ;;
@@ -52,7 +57,8 @@ Support tiny subset of MML (Music Macro Language)
   (if (car token-list)
       (ecase (getf (car token-list) :kind)
         (:note (parse-note state token-list note-list))
-        (:octave (parse-octave state token-list note-list)))
+        (:octave (parse-octave state token-list note-list))
+        (:rest (parse-rest state token-list note-list)))
       note-list))
 
 (defun.ps+ parse-note (state token-list note-list)
@@ -89,6 +95,19 @@ Support tiny subset of MML (Music Macro Language)
                     value))))
     (parse-any state rest-token note-list)))
 
+(defun.ps+ parse-rest (state token-list note-list)
+  (let ((token (car token-list))
+        (rest-token (cdr token-list)))
+    (assert (eq (getf token :kind) :rest))
+    (let ((base-len  (getf token :len))
+          (dot-count (getf token :dot-count)))
+      (when base-len
+        (setf (mml-state-tick state)
+              (tone-len-to-tick base-len dot-count)))
+      (incf (mml-state-sum-tick state)
+              (mml-state-tick state))
+      (parse-any state rest-token note-list))))
+
 ;; --- tokenizer --- ;;
 
 (defun.ps+ tokenize-mml (mml-str)
@@ -101,6 +120,8 @@ Support tiny subset of MML (Music Macro Language)
                (tokenize-tone mml-ops token-list))
               ((octave-op-p op)
                (tokenize-octave mml-ops token-list))
+              ((rest-op-p op)
+               (tokenize-rest mml-ops token-list))
               (t (error "Invalid MML. rest: ~A" mml-ops)))
         token-list)))
 
@@ -113,26 +134,18 @@ Support tiny subset of MML (Music Macro Language)
                      (progn (pop rest-mml)
                             (extract-tone-changer
                              (+ result (if (string= op "-") -1 1))))
-                     result)))
-             (extract-tone-len ()
-               (extractf-number rest-mml))
-             (extract-dot-count (count)
-               (let ((op (car rest-mml)))
-                 (if (string= op ".")
-                     (progn (pop rest-mml)
-                            (extract-dot-count (1+ count)))
-                     count))))
-      (let ((tone      (calc-tone-by-diff
-                        base-tone 0 (extract-tone-changer 0)))
-            (len       (extract-tone-len))
-            (dot-count (extract-dot-count 0)))
-        (when (and (not len) (> dot-count 0))
-          (error "Note length number is required before dot"))
-        (tokenize-any
-         rest-mml
-         (append token-list
-                 (list (list :kind :note :tone tone :len len
-                             :dot-count dot-count))))))))
+                     result))))
+      (let ((tone (calc-tone-by-diff
+                   base-tone 0 (extract-tone-changer 0))))
+        (multiple-value-bind (len dot-count)
+            (extractf-number-and-dot-count rest-mml)
+          (when (and (not len) (> dot-count 0))
+            (error "Note length number is required before dot"))
+          (tokenize-any
+           rest-mml
+           (append token-list
+                   (list (list :kind :note :tone tone :len len
+                               :dot-count dot-count)))))))))
 
 (defun.ps+ tokenize-octave (mml-ops token-list)
   (let* ((op (car mml-ops))
@@ -148,6 +161,17 @@ Support tiny subset of MML (Music Macro Language)
     (tokenize-any rest-mml
                   (append token-list (list token)))))
 
+(defun.ps+ tokenize-rest (mml-ops token-list)
+  (let* ((rest-mml (cdr mml-ops)))
+    (multiple-value-bind (len dot-count)
+        (extractf-number-and-dot-count rest-mml)
+      (when (and (not len) (> dot-count 0))
+            (error "Note length number is required before dot"))
+      (tokenize-any rest-mml
+                    (append token-list
+                            (list (list :kind :rest :len len
+                                        :dot-count dot-count)))))))
+
 ;; - extract - ;;
 
 (eval-when (:execute :load-toplevel :compile-toplevel)
@@ -160,13 +184,31 @@ Support tiny subset of MML (Music Macro Language)
                               (rec (append num-op-list (list op))))
                        (when (> (length num-op-list) 0)
                          (number-op-list-to-number num-op-list))))))
-        (values (rec (list)) rest-mml)))))
+        (values (rec (list)) rest-mml))))
+
+  (defun.ps+ extract-dot-count (mml-ops)
+    (let ((rest-mml mml-ops))
+      (labels ((rec (count)
+                 (let ((op (car rest-mml)))
+                   (if (string= op ".")
+                       (progn (pop rest-mml)
+                              (rec (1+ count)))
+                       count))))
+        (values (rec 0) rest-mml)))))
 
 (defmacro.ps+ extractf-number (mml-ops)
   `(multiple-value-bind (num rest)
        (extract-number ,mml-ops)
      (setf ,mml-ops rest)
      num))
+
+(defmacro.ps+ extractf-number-and-dot-count (mml-ops)
+  `(multiple-value-bind (num rest1)
+       (extract-number ,mml-ops)
+     (multiple-value-bind (dot-count rest2)
+         (extract-dot-count rest1)
+       (setf ,mml-ops rest2)
+       (values num dot-count))))
 
 ;; --- operator --- ;;
 
@@ -181,6 +223,9 @@ Support tiny subset of MML (Music Macro Language)
 
 (defun.ps+ octave-op-p (op)
   (find-string op (split-string-to-op "<>O")))
+
+(defun.ps+ rest-op-p (op)
+  (find-string op (split-string-to-op "R")))
 
 ;; --- utils --- ;;
 

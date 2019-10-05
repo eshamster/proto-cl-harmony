@@ -17,7 +17,10 @@
                 ("O2<>"
                  ((:KIND :OCTAVE :MODE :SET :VALUE 2)
                   (:KIND :OCTAVE :MODE :INC :VALUE 1)
-                  (:KIND :OCTAVE :MODE :INC :VALUE -1))))))
+                  (:KIND :OCTAVE :MODE :INC :VALUE -1)))
+                ("Rr8."
+                 ((:KIND :REST :LEN NIL :DOT-COUNT 0)
+                  (:KIND :REST :LEN 8 :DOT-COUNT 1))))))
     (dolist (pair list)
       (let ((mml-str  (nth 0 pair))
             (expected (nth 1 pair)))
