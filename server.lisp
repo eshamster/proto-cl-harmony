@@ -69,6 +69,22 @@
                     (:div
                      (:input :id "scale-display" :type "text" :disabled t nil))
 
+                    (:h2 "Melody by tiny MML (Music Macro Language)")
+                    (:table
+                     (:tr (:th "With Harmony")
+                          (:td (:input :id "with-harmony" :type "checkbox")))
+                     (:tr (:th "MML")
+                          (:td (:textarea :id "mml-input" "<CDEFGAB<C")))
+                     (:tr (:th "BPM")
+                          (:td (:div :id "melody-bpm-value" 120)
+                               (:input :id "melody-bpm" :type :range
+                                       :min 20 :max 480 :value 120))))
+                    (:div
+                     (:button :id "play-melody-btn" "Play Melody"))
+                    (:table :id "measure-table" nil)
+
+                    (:hr nil)
+
                     (:h2 "Harmony")
                     (:table
                      (:tr (:td (:button :id "play-harmony-1-btn" "I"))
@@ -78,20 +94,6 @@
                      (:tr (:td (:button :id "play-harmony-5-btn" "V"))
                           (:td (:button :id "play-harmony-6-btn" "VI"))
                           (:td (:button :id "play-harmony-7-btn" "VII"))))
-
-                    (:h2 "Melody by tiny MML (Music Macro Language)")
-                    (:table
-                     (:tr (:th "With Harmony")
-                          (:td (:input :id "with-harmony" :type "checkbox")))
-                     (:tr (:th "MML")
-                          (:td (:textarea :id "mml-input" "CDEFGAB<C")))
-                     (:tr (:th "BPM")
-                          (:td (:div :id "melody-bpm-value" 120)
-                               (:input :id "melody-bpm" :type :range
-                                       :min 20 :max 480 :value 120))))
-                    (:div
-                     (:button :id "play-melody-btn" "Play Melody"))
-                    (:table :id "measure-table" nil)
                     (:script :src "js/main.js" nil)))))))
 
 (defun stop ()
