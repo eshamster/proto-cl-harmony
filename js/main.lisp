@@ -25,6 +25,7 @@
                 :note-velocity
                 :init-sequencer
                 :start-sequencer
+                :clear-sequencer
                 :register-note-list
                 :get-quater-note-tick
                 :get-measure-tick
@@ -100,12 +101,14 @@
             note-list)
       (incf i)
       (setf prev-tone-number (tone-to-number tone octave)))
+    (clear-sequencer *sequencer*)
     (register-note-list *sequencer* note-list)
     (start-sequencer *sequencer* bpm)))
 
 (defun.ps+ start-play-harmony (num-in-scale)
   (unless *sequencer*
     (init-sequencer-if-requied))
+  (clear-sequencer *sequencer*)
   (let ((tick (* 2 (get-quater-note-tick)))
         (bpm 120)
         (scale (make-scale-by-input)))
@@ -140,6 +143,7 @@
 
 (defun.ps start-play-meolody (mml-str)
   (init-sequencer-if-requied)
+  (clear-sequencer *sequencer*)
   (let ((bpm *melody-bpm*))
     (try (progn
            (let ((notes (parse-mml mml-str)))

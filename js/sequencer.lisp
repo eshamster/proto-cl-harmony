@@ -11,6 +11,7 @@
            :note-velocity
            :init-sequencer
            :start-sequencer
+           :clear-sequencer
            :register-note-list
            :get-quater-note-tick
            :get-measure-tick
@@ -41,7 +42,8 @@
   (t0 0) ; time when starting sequencer
   (note-queue (list))
   (beat-count 4)
-  (beat-base 4))
+  (beat-base 4)
+  master-gain-node)
 
 ;; --- interface --- ;;
 
@@ -59,33 +61,45 @@
 (defun.ps+ register-note-list (sequencer note-list)
   (queue-notes (sequencer-note-queue sequencer) note-list))
 
-;; TODO: Enable restart and stop. Avoid duplicate running.
 ;; TODO: Enable to change BPM in playing
 
 (defun.ps start-sequencer (sequencer bpm)
-  (with-slots (t0 audioctx) sequencer
+  (with-slots (t0 audioctx master-gain-node) sequencer
     (setf (sequencer-t0 sequencer) audioctx.current-time)
-    (set-interval
-     (lambda ()
-       (let* ((cur-sec (- audioctx.current-time t0))
-              (notes (dequeue-notes (sequencer-note-queue sequencer)
-                                    (sec-to-tick cur-sec bpm)
-                                    (sec-to-tick (/ *detect-ms* 1000) bpm))))
-         (dolist (note notes)
-           (let ((start-tick (note-start-tick note))
-                 (resume-tick (note-resume-tick note))
-                 (osc (new (#j.OscillatorNode# audioctx)))
-                 (gain-node (new (#j.GainNode# audioctx))))
-             (setf osc.frequency.value
-                   (get-tone-freq (note-tone note)
-                                  (note-octave note))
-                   gain-node.gain.value (/ (note-velocity note) *max-velocity*))
-             (chain osc
-                    (connect gain-node)
-                    (connect audioctx.destination))
-             (osc.start (+ t0 (tick-to-sec start-tick bpm)))
-             (osc.stop  (+ t0 (tick-to-sec (+ start-tick resume-tick) bpm)))))))
-     *monitor-ms*)))
+    (setf master-gain-node (new (#j.GainNode# audioctx)))
+    (let (timer-id)
+      (setf timer-id
+            (set-interval
+             (lambda ()
+               (let* ((cur-sec (- audioctx.current-time t0))
+                      (notes (dequeue-notes (sequencer-note-queue sequencer)
+                                            (sec-to-tick cur-sec bpm)
+                                            (sec-to-tick (/ *detect-ms* 1000) bpm))))
+                 (dolist (note notes)
+                   (let ((start-tick (note-start-tick note))
+                         (resume-tick (note-resume-tick note))
+                         (osc (new (#j.OscillatorNode# audioctx)))
+                         (gain-node (new (#j.GainNode# audioctx))))
+                     (setf osc.frequency.value
+                           (get-tone-freq (note-tone note)
+                                          (note-octave note))
+                           gain-node.gain.value (/ (note-velocity note) *max-velocity*))
+                     (chain osc
+                            (connect gain-node)
+                            (connect master-gain-node)
+                            (connect audioctx.destination))
+                     (osc.start (+ t0 (tick-to-sec start-tick bpm)))
+                     (osc.stop  (+ t0 (tick-to-sec (+ start-tick resume-tick) bpm)))))
+                 (when (= (count-rest-notes (sequencer-note-queue sequencer)) 0)
+                   (clear-interval timer-id))))
+             *monitor-ms*)))))
+
+(defun.ps clear-sequencer (sequencer)
+  (with-slots ((gain master-gain-node) (queue note-queue)) sequencer
+    (when gain
+      (setf gain.gain.value 0)
+      (setf gain nil))
+    (clear-notes-queue queue)))
 
 ;; - beat and measure - ;;
 
@@ -167,6 +181,12 @@
                    (rec (push (pop queue) result))
                    result))))
     (rec (list))))
+
+(defun.ps+ count-rest-notes (queue)
+  (length queue))
+
+(defmacro.ps+ clear-notes-queue (queue)
+  `(setf ,queue (list)))
 
 (defun.ps+ peek-all-notes (queue)
   queue)
