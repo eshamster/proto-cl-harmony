@@ -54,8 +54,6 @@
                                     (if (eq tone :c)
                                         (markup (:option :value tone-value :selected t tone))
                                         (markup (:option :value tone-value tone))))))))
-                     (:tr (:th "Octave")
-                          (:td (:input :id "scale-octave" :type "number" :value 0)))
                      (:tr (:th "Scale kind")
                           (:td (:select :id "scale-kind"
                                 (dolist (kind '(:major :minor-natural

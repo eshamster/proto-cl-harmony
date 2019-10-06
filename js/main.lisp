@@ -85,7 +85,7 @@
   (let* ((note-list (list))
          (bpm 120)
          (tick (get-quater-note-tick))
-         (octave (get-value "scale-octave"))
+         (octave 0)
          (scale (make-scale-by-input))
          (i 0)
          (prev-tone-number (tone-to-number (car scale) octave)))
