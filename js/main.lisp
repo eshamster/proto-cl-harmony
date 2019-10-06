@@ -30,7 +30,8 @@
                 :get-quater-note-tick
                 :get-measure-tick
                 :calc-last-measure
-                :calc-notes-in-measure)
+                :calc-notes-in-measure
+                :set-beat)
   (:import-from :proto-cl-harmony/js/utils
                 :get-elem
                 :get-value
@@ -144,6 +145,9 @@
 (defun.ps start-play-meolody (mml-str)
   (init-sequencer-if-requied)
   (clear-sequencer *sequencer*)
+  (set-beat *sequencer*
+            (get-value "beat-count")
+            (get-value "beat-base"))
   (let ((bpm *melody-bpm*))
     (try (progn
            (let ((notes (parse-mml mml-str)))

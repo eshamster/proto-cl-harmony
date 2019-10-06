@@ -76,7 +76,19 @@
                      (:tr (:th "BPM")
                           (:td (:div :id "melody-bpm-value" 120)
                                (:input :id "melody-bpm" :type :range
-                                       :min 20 :max 480 :value 120))))
+                                       :min 20 :max 480 :value 120)))
+                     (:tr (:th "Beat")
+                          (:td (:select :id "beat-count"
+                                (dolist (count '(1 2 3 4 5 6 7 8))
+                                  (if (eq count 4)
+                                      (markup (:option :value count :selected t count))
+                                      (markup (:option :value count count)))))
+                               " / "
+                               (:select :id "beat-base"
+                                (dolist (beat-base '(2 4 8))
+                                  (if (eq beat-base 4)
+                                      (markup (:option :value beat-base :selected t beat-base))
+                                      (markup (:option :value beat-base beat-base))))))))
                     (:div
                      (:button :id "play-melody-btn" "Play Melody"))
                     (:table :id "measure-table" nil)

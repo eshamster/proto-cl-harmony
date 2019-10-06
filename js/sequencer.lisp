@@ -16,7 +16,8 @@
            :get-quater-note-tick
            :get-measure-tick
            :calc-last-measure
-           :calc-notes-in-measure)
+           :calc-notes-in-measure
+           :set-beat)
   (:import-from :proto-cl-harmony/js/tone
                 :get-tone-freq))
 (in-package :proto-cl-harmony/js/sequencer)
